@@ -33,17 +33,17 @@ public:
             ImRenderUtil::drawText(Vector2<float>(pos2.x + 10, pos2.y + 46), &version, UIColor(44, 44, 44), 1.1, 1, true);
             ImGui::PopFont();
 
+            UIColor customColor = UIColor(129, 221, 224);  // Define the custom color
+
             for (char c : (std::string)name)
             {
                 std::string string = Utils::combine(c, "");
-                int colorIndex = ind * 80;
 
                 float charWidth = ImRenderUtil::getTextWidth(&string, 2.3);
                 float charHeight = ImRenderUtil::getTextHeight(2.3);
-                UIColor RGBColor = ColorUtils::Rainbow(1.6, 1, 1, colorIndex);
-                ImRenderUtil::drawShadowSquare(Vector2<float>(pos2.x + charWidth / 2, pos2.y + charHeight / 1.2), 15.f, RGBColor, 0.85f, 70.f, 0);
 
-                ImRenderUtil::drawText(Vector2<float>(pos2.x + 10, pos2.y + 10), &string, RGBColor, 2.3, 1, true);
+                ImRenderUtil::drawShadowSquare(Vector2<float>(pos2.x + charWidth / 2, pos2.y + charHeight / 1.2), 15.f, customColor, 0.85f, 70.f, 0);
+                ImRenderUtil::drawText(Vector2<float>(pos2.x + 10, pos2.y + 10), &string, customColor, 2.3, 1, true);
 
                 pos2.x += charWidth;
                 ++ind;
@@ -67,6 +67,6 @@ public:
 
             ImRenderUtil::drawText(textPos, &name, UIColor(255, 255, 255), 1.16, 1, true);
 
-        }
+        };
     }
 };
