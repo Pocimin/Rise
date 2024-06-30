@@ -1,11 +1,9 @@
 #pragma once
 
-class ChestStealer : public Module
-{
+class ChestStealer : public Module {
 public:
     ChestStealer(int keybind = 7, bool enabled = true) :
-        Module("ChestStealer", "Player", "Steal items out of chests", keybind, enabled)
-    {
+        Module("ChestStealer", "Player", "Steal items out of chests", keybind, enabled) {
         addSlider("SPS", "How many items are moved a second", &SPS, 1, 20);
     }
 
@@ -14,8 +12,7 @@ public:
     int item = 0;
     int maxItem = 56;
 
-    void onEvent(ContainerTickEvent* event) override
-    {
+    void onEvent(ContainerTickEvent* event) override {
         if (TimeUtils::hasTimeElapsed("Cs", 500, false))
             item = 0;
 
@@ -24,20 +21,25 @@ public:
         if (!controller)
             return;
 
+        bool itemsRemaining = false;
+
         if (TimeUtils::hasTimeElapsed("Cs", 1000 / SPS, true)) {
-            for (int i = 0; i < 56; ++i)
-            {
+            for (int i = 0; i < 56; ++i) {
                 if (controller->_getItemStack(Containers::Container, i)->item != nullptr) {
                     controller->shiftItems(Containers::Container, i);
-                    return;
+                    itemsRemaining = true;
+                    break;
                 }
-                else continue;
             }
         }
-        controller->closeContainer();
+
+        // Close the container if no items are remaining
+        if (!itemsRemaining) {
+            controller->closeContainer();
+        }
     }
 
     std::string getModeName() override {
-        return " Delayed";
+        return "Delayed";
     }
 };

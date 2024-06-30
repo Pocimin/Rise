@@ -92,7 +92,7 @@ public:
                 // Should we jump?
                 if ((height / 10) > 0 && onGround)
                 {
-                    //player->jumpFromGround();
+                    player->jumpFromGround();
                     state->Velocity.y += 1;
                     state->Velocity.y = height / 10;
                 }
@@ -198,7 +198,7 @@ public:
             {
                 if (onGround)
                 {
-                    if (TimeUtils::hasTimeElapsed("jumpDelay", 100, true)) {
+                    if (TimeUtils::hasTimeElapsed("jumpDelay", 0, true)) {
                         gotBoost = false;
                         player->jumpFromGround();
                     }

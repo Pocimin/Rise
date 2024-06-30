@@ -330,7 +330,7 @@ public:
 		return nullptr;
 	}
 
-	AttributeInstance* getAttribute(AttributeId id) {
+	AttributeInstance* getAttribute(AttributeId id) { 
 		return getAttribute((int)id);
 	}
 
@@ -518,4 +518,6 @@ public:
 	BUILD_ACCESS(AABBShapeComponent*, AABBShape, 0x298); // 1.21.0
 	// MovementInterpolatorComponent Actor::getRotation(void) or StateVector + 16
 	BUILD_ACCESS(MovementInterpolatorComponent*, MovementInterpolator, 0x2A0); // 1.21.0
+	//wtf lol
+	BUILD_ACCESS(std::string, entityIdString, 0x2B8); // updated
 };

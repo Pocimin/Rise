@@ -81,7 +81,7 @@ void TextPacketDispatcherDetour(const float* a1, const float* networkIdentifier,
 
 			Global::KilledTarget = target;
 			Global::Killed = true;
-			ChatUtils::sendMessage("yeah some funny shit");
+			ChatUtils::sendMessage("Rise on top, killed by rise lmfao!!");
 		}
 	}
 

@@ -4,14 +4,15 @@
 
 class TargetHUD : public Module {
 public:
-	TargetHUD(int keybind = Keys::NONE, bool enabled = false) 
-		: Module("TargetHUD", "Visual", "Display Target", keybind, enabled) 
+	TargetHUD(int keybind = Keys::NONE, bool enabled = false)
+		: Module("TargetHUD", "Visual", "Display Target", keybind, enabled)
 	{
 		addBool("Track3D", "Changes the targethud position to the targets", &track3d);
 		//addBool("Heart Check", "Calcultes Absorption / HP for hive and other servers that have health checks", &showCalculatedHearts);
 		addSlider("Rounding", "The rounding of the targethud", &rounding, 1, 30);
 	}
 
+private:
 	bool track3d = false;
 	float rounding = 5;
 
@@ -19,7 +20,8 @@ public:
 	Vector3<float> targetPos;
 
 	//static inline float targetHealth = 20.f;
-	float targetHealth = 20.f;
+	int targetIndex = 0;
+public:
 
 	static void ImScaleStart()
 	{
@@ -52,25 +54,24 @@ public:
 		}
 	}
 
-	struct Distance { // A method used to sort between distances
-		bool operator()(Actor* target, Actor* target2) {
-			auto instance = Global::getClientInstance();
-			auto localPlayer = instance->getLocalPlayer();
-			return (target->getStateVector()->Position).distance(localPlayer->getStateVector()->Position) <= (target2->getStateVector()->Position).distance(localPlayer->getStateVector()->Position);
-		}
-	};
-
-	std::vector<Actor*> AvailableTargetList;
+	std::vector<Actor*> targetList;
 	void CreateOurTargetList() {
 		auto instance = Global::getClientInstance();
 		auto localPlayer = instance->getLocalPlayer();
 		auto list = localPlayer->getLevel()->getRuntimeActorList();
 		auto lpPos = localPlayer->getStateVector()->Position;
 		for (Actor* actor : list) {
-			if (actor != localPlayer && actor->isAlive() && !actor->isBot()) { //  && !actor->isBot()
+			if (actor != localPlayer && actor->isAlive() && !actor->isBot()){
 				float dist = localPlayer->getStateVector()->Position.distance(actor->getStateVector()->Position);
-				if (dist < 7) {
-					AvailableTargetList.push_back(actor);
+				if (dist <= 4) {
+					if (getModuleByName("teams")->isEnabled()) {
+						if (!actor->isTeammate(localPlayer)) {
+							targetList.push_back(actor);
+						}
+					}
+					else {
+						targetList.push_back(actor);
+					}
 				}
 			}
 		}
@@ -85,120 +86,103 @@ public:
 			return;
 		}
 
+		if (player->getAttribute(AttributeId::Health) == nullptr) {
+			return;
+		}
+
 		//sort based on distance
-		AvailableTargetList.clear();
+		targetList.clear();
 		CreateOurTargetList();
 
 		static EasingUtil inEase;
 
-		//sort based on distance
-		std::sort(AvailableTargetList.begin(), AvailableTargetList.end(), Distance());
+		bool shouldDisplay = !targetList.empty() && Global::getClientInstance()->getMinecraftGame()->CanUseKeys;
 
-		(!AvailableTargetList.empty() && Global::getClientInstance()->getMinecraftGame()->CanUseKeys) ? inEase.incrementPercentage(ImRenderUtil::getDeltaTime() * 15.f / 10)
+		(shouldDisplay) ? inEase.incrementPercentage(ImRenderUtil::getDeltaTime() * 15.f / 10)
 			: inEase.decrementPercentage(ImRenderUtil::getDeltaTime() * 2 * 15.f / 10);
 
-		float inScale = inEase.easeOutExpo();
+		float inScale = shouldDisplay ? inEase.easeOutElastic() : inEase.easeOutBack();
 
-		if (inEase.isPercentageMax()) 
+		if (inEase.isPercentageMax())
 			inScale = 1;
 
 		ImScaleStart();
-		auto pos = Vector2<float>(ImRenderUtil::getScreenSize().x / 2 + 10, ImRenderUtil::getScreenSize().y / 2 + 10);
-		auto rect = Vector4<float>(pos.x, pos.y, pos.x + 230, pos.y + 68);
+		auto pos = Vector2<float>(ImRenderUtil::getScreenSize().x / 2 + 140, ImRenderUtil::getScreenSize().y / 2);
+		auto rect = Vector4<float>(pos.x, pos.y, pos.x + 250, pos.y + 80);
 
 		static std::string targetName;
-		static bool shouldReset = false;
-
+		static std::string targetHealthStr;
+		float targetHealth = 0.f;
+		static float targetAbsorption = 0;
+		static bool calculateHealth = false;
 		int damageTime = 0;
 
-		if (!AvailableTargetList.empty()) {
-			auto target = AvailableTargetList[0];
+		if (!targetList.empty()) {
+			if (TimeUtils::hasTimeElapsed("TargetHudIndex", 300, true)) {
+				targetIndex++;
+			}
+
+			if (targetIndex >= targetList.size())
+				targetIndex = 0;
+
+			auto target = targetList[targetIndex];
+			if (target->getentityIdString().empty()) return;
+			damageTime = target->getHurtTime();
 
 			targetName = target->getNametag()->c_str();
 			targetName = Utils::sanitize(targetName);
-			targetName = targetName.substr(0, targetName.find('\n'));
+			targetName = "Name: " + targetName.substr(0, targetName.find('\n'));
 
-			targetHealth = target->targetHealth;
-
-			damageTime = target->getHurtTime();
-
-			if (shouldReset) {
-				target->targetHealth = 20.f;
-				shouldReset = false;
+			if (target->getHealth() == 20.f) {
+				calculateHealth = true;
+				targetHealth = target->getHealth(); // Later
+			}
+			else {
+				calculateHealth = false;
+				targetHealth = target->getHealth();
 			}
 
-			if (target->getHurtTime() == 9) {
-				target->targetHealth -= 0.5;
-			}
+			targetAbsorption = target->getAbsorption();
 
-			if (target->targetHealth <= 1) {
-				//target->targetHealth += 4;
-			}
-
-			if (TimeUtils::hasTimeElapsed("HealthCalculate", 1000, true)) {
-				if (target->targetHealth < 20) {
-					if (targetHealth + 3 < 20) {
-						target->targetHealth += 1;
-					}
-				}
-			}
+			std::ostringstream oss;
+			oss << std::fixed << std::setprecision(1) << ((targetHealth + targetAbsorption) / 2);
+			targetHealthStr = "Health: " + oss.str();
 
 			if (target == nullptr)
 				return;
 		}
 		else {
-			shouldReset = true;
-			//targetHealth = 0.f;
+			targetIndex = 0;
 		}
 
-		ImRenderUtil::fillRectangle(rect, UIColor(0, 0, 0), 0.6f, rounding);
-		ImRenderUtil::fillShadowRectangle(rect, UIColor(0, 0, 0), 0.9f, 130.f, 0, rounding);
+		if (inScale == 1) { ImRenderUtil::Blur(rect, 5, 14.f); }
 
-		static float DamageAnimation = damageTime * 0.7; //* 2
-		DamageAnimation = Math::animate(damageTime * 0.7, DamageAnimation, ImRenderUtil::getDeltaTime() * 30.f);
+		ImRenderUtil::fillRectangle(rect, UIColor(0, 0, 0), 0.6f, 14.f);
+		ImRenderUtil::fillShadowRectangle(rect, UIColor(0, 0, 0), 0.8f, 50.f, 0, 14.f);
 
-		//Vector4<float> HeadPos = Vector4<float>(rect.x + 8, rect.y + 8, rect.x + 70, rect.y + 70);
-		Vector4<float> HeadPos = Vector4<float>((rect.x + 8) + DamageAnimation, (rect.y + 8) + DamageAnimation, (rect.x + 60) - DamageAnimation, (rect.y + 60) - DamageAnimation);
+		ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[3]);
+		ImRenderUtil::drawText(Vector2<float>(pos.x + 75, pos.y + 23), &targetName, UIColor(255, 255, 255), 1.2f, 1.f, true);
+		ImGui::PopFont();
+
+		ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
+		ImRenderUtil::drawText(Vector2<float>(pos.x + 75, pos.y + 43), &targetHealthStr, UIColor(170, 170, 170), 1.f, 1.f, true);
+		ImGui::PopFont();
+
+		static float DamageAnimation = damageTime * 1.5; //* 2
+		DamageAnimation = Math::animate(damageTime * 1.5, DamageAnimation, ImRenderUtil::getDeltaTime() * 30.f);
+
+		Vector4<float> HeadPos = Vector4<float>((rect.x + 8) + DamageAnimation, (rect.y + 12) + DamageAnimation, (rect.x + 65) - DamageAnimation, (rect.y + 69) - DamageAnimation);
 		ImColor HeadColor = IM_COL32_WHITE;
 
 		static ParticleEngine particleMgr;
-		
+
 		if (damageTime >= 1) {
-			UIColor UIHeadColor = UIColor(255, 204, 203); //255, 114, 118
+			UIColor UIHeadColor = UIColor(255, 114, 118); //255, 114, 118
 			HeadColor = ImColor(UIHeadColor.r, UIHeadColor.g, UIHeadColor.b, UIHeadColor.a);
-			ImRenderUtil::fillShadowRectangle(HeadPos, UIHeadColor, 1 * (DamageAnimation / 10), 90.f * (DamageAnimation / 10), 0, rounding);
-			//particleMgr.drawParticles();
-			//particleMgr.updateParticles(ImRenderUtil::getDeltaTime() * 0.9f);
-			//particleMgr.addParticles(5, HeadPos.getCenter().x, HeadPos.getCenter().y, 80, 2.f);
+			ImRenderUtil::fillShadowRectangle(HeadPos, UIHeadColor, 1 * (DamageAnimation / 10), 40.f * (DamageAnimation / 10), 0, 14.f);
 		}
 
-		//ImGui::GetBackgroundDrawList()->AddImageRounded((void*)Global::RenderInfo::HeadTexture, ImVec2(HeadPos.x, HeadPos.y), ImVec2(HeadPos.z, HeadPos.w), ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 114, 118, 255), rounding);
-		ImGui::GetBackgroundDrawList()->AddImageRounded((void*)Global::RenderInfo::HeadTexture, ImVec2(HeadPos.x, HeadPos.y), ImVec2(HeadPos.z, HeadPos.w), ImVec2(0, 0), ImVec2(1, 1), HeadColor, rounding);
-
-		ImRenderUtil::drawText(Vector2<float>(pos.x + 67, pos.y + 17), &targetName, UIColor(255, 255, 255), 1.2f, 1.f, true);
-		//ImRenderUtil::drawText(Vector2<float>(pos.x + 75.5f, pos.y + 8), &targetName, UIColor(255, 255, 255), 1.4f, 1.f, true);
-
-		std::ostringstream oss;
-		oss << std::fixed << std::setprecision(0) << targetHealth;
-
-		std::string healthStr = oss.str() + (std::string)" HP";
-
-		static float healthEase = targetHealth / 20.f;
-
-		healthEase = Math::animate(targetHealth / 20.f, healthEase, ImRenderUtil::getDeltaTime() * 10.f);
-
-		ImRenderUtil::drawText(Vector2<float>(pos.x + 67, pos.y + 41), &healthStr, UIColor(255, 255, 255), 1.f, 1.f, true);
-
-		auto healthRect = Vector4<float>(pos.x + 67, pos.y + 30, pos.x + 75 + (150 * healthEase), pos.y + 39);
-		auto healthFilledRect = Vector4<float>(pos.x + 67, pos.y + 30, pos.x + 75 + 150, pos.y + 39);
-
-		/*ImRenderUtil::fillShadowRectangle(healthFilledRect, UIColor(9, 3, 2), 1.f, 20.f, 0, 70.f);
-		ImRenderUtil::fillRectangle(healthFilledRect, UIColor(9, 3, 2), 1.f, 50.f);
-
-		ImRenderUtil::fillShadowRectangle(healthRect, ColorUtils::Rainbow(2.5, 1, 1, 1), 1.f, 40.f, 0, 70.f);
-		ImRenderUtil::fillRectangle(healthRect, ColorUtils::Rainbow(2.5, 1, 1, 1), 1.f, 50.f);
-		ImRenderUtil::fillGradientOpaqueRectangle(healthRect, UIColor(0, 0, 0), UIColor(0, 0, 0), 0.f, 0.25f);*/
-
+		ImGui::GetBackgroundDrawList()->AddImageRounded((void*)Global::RenderInfo::HeadTexture, ImVec2(HeadPos.x, HeadPos.y), ImVec2(HeadPos.z, HeadPos.w), ImVec2(0, 0), ImVec2(1, 1), HeadColor, 14.f);
 		ImScaleEnd(inScale, inScale, ImVec2(pos.x + 125, pos.y + 40));
 
 		/*for (Actor* TargetPlayerList : AvailableTargetList) {
@@ -206,7 +190,7 @@ public:
 				Vector3<float> targetPos = AvailableTargetList[0]->getStateVector()->Position;
 
 				float size = 47.f;
-				
+
 
 				float playerDistance = player->getStateVector()->Position.distance(targetPos);
 
