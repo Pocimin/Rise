@@ -4,7 +4,7 @@ class Animations : public Module
 {
 public:
     Animations(int keybind = 7, bool enabled = true) :
-        Module("Animations", "Visual", "Animations like its flux", keybind, enabled)
+        Module("Animations", "Visual", "My client yeah that shit deluxe", keybind, enabled)
     {
         addEnum("Swing", "The Swing type", { "Flux", "Tap" }, &swingType);
         addSlider("Swing Speed", "The swing speed", &Global::swingSpeed, 1, 70);
@@ -30,12 +30,12 @@ public:
         glm::mat4& matrix = *event->Matrix;
 
         if (swingType == 0) {
-            //Utils::nopBytes(fluxSwingAddr, 5);
-            //Utils::patchBytes((BYTE*)((uintptr_t)tapAddr), (BYTE*)"\xF3\x0F\x51\xF0", 4);
+            Utils::nopBytes(fluxSwingAddr, 5);
+            Utils::patchBytes((BYTE*)((uintptr_t)tapAddr), (BYTE*)"\xF3\x0F\x51\xF0", 4);
         }
         if (swingType == 1) {
-            //Utils::nopBytes((BYTE*)tapAddr, 4);
-            //zUtils::patchBytes((BYTE*)((uintptr_t)fluxSwingAddr), (BYTE*)"\xF3\x0F\x51\xF0", 6);
+            Utils::nopBytes((BYTE*)tapAddr, 4);
+            Utils::patchBytes((BYTE*)((uintptr_t)fluxSwingAddr), (BYTE*)"\xF3\x0F\x51\xF0", 6);
         }
 
         if ((GetAsyncKeyState(VK_RBUTTON) || Global::ShouldBlock) && Global::getClientInstance()->getMinecraftGame()->getCanUseKeys()) // RenderUtil::GetCTX()->ClientInstance->mcGame->CanUseKeys

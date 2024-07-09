@@ -22,7 +22,7 @@ public:
 
 	static inline char usernameQuery[256];
 	static inline char usernameH[2] = { 0 };
-	
+
 	static inline char passwordQuery[256];
 	static inline char passwordH[2] = { 0 };
 
@@ -87,8 +87,8 @@ public:
 
 #pragma region ClientUI
 		if (Authorized) {
-			Vector4<float> UIPos (Rectangle.x + 40, Rectangle.y + 40, Rectangle.z - 40, Rectangle.w - 40);
-			Vector4<float> UILeft (Rectangle.x + 40, Rectangle.y + 40, Rectangle.x + 150, Rectangle.w - 40);
+			Vector4<float> UIPos(Rectangle.x + 40, Rectangle.y + 40, Rectangle.z - 40, Rectangle.w - 40);
+			Vector4<float> UILeft(Rectangle.x + 40, Rectangle.y + 40, Rectangle.x + 150, Rectangle.w - 40);
 
 			ImRenderUtil::fillRectangleCustom(UILeft, UIColor(29, 29, 29), 1, Vector4<float>(20, 20, 0, 0));
 		}

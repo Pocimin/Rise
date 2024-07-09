@@ -92,9 +92,10 @@ public:
                 // Should we jump?
                 if ((height / 10) > 0 && onGround)
                 {
-                    player->jumpFromGround();
                     state->Velocity.y += 1;
                     state->Velocity.y = height / 7;
+                    player->jumpFromGround();
+                    PlayerActionPacket
                 }
                 MovementUtils::setSpeed(speed / 10);
             }
@@ -116,7 +117,7 @@ public:
                         currentSpeed = speed / 10;
                         lastSpeed = speed / 10;
                         //if ((height / 10) <= 3.9 && (height / 10) >= 4.1) {
-                            player->jumpFromGround();
+                        player->jumpFromGround();
                         //}
                         //else {
                             //state->Velocity.y += height / 10;

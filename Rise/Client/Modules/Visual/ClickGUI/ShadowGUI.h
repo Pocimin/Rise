@@ -443,7 +443,7 @@ public:
 
                             Vector2<float> textPos = Vector2<float>(renderx, rendery + 70.f);
 
-                            string text = "Hover a module and click the Middle button to bind";
+                            string text = "Hover a module and click the Middle button to bind!";
                             float textLen = ImRenderUtil::getTextWidth(&text, 1.3) / 2;
                             textPos.x -= textLen;
 
