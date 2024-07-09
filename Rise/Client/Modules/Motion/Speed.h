@@ -95,7 +95,6 @@ public:
                     state->Velocity.y += 1;
                     state->Velocity.y = height / 7;
                     player->jumpFromGround();
-                    PlayerActionPacket
                 }
                 MovementUtils::setSpeed(speed / 10);
             }

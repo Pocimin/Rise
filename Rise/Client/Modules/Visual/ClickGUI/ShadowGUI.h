@@ -43,26 +43,6 @@ public:
         float windowX = (screenWidth - windowWidth) * 0.5f;
         float windowY = screenHeight;
 
-        std::string searchQueryLower = searchQuery;
-
-        std::transform(searchQueryLower.begin(), searchQueryLower.end(), searchQueryLower.begin(), [](unsigned char c) {
-            return std::tolower(c);
-            });
-
-        std::string SearchStr = "Search";
-        std::string SearchQueryStr = strlen(searchQuery) == 0 ? "Search" : searchQueryLower;
-
-        UIColor SearchQueryColor = strlen(searchQuery) == 0 ? UIColor(108, 108, 108) : UIColor(255, 255, 255);
-                                                                                                                                           //150
-        Vector4<float> rectangle = Vector4<float>(windowX, windowY, windowX + 220.0f, strlen(searchQuery) == 0 ? windowY + 68.0f : windowY + 68.f).scaleToCenter(inScale);
-        Vector4<float> searchRectangle = Vector4<float>(windowX + 8, windowY + 30, windowX + 212, windowY + 60).scaleToCenter(inScale);
-
-        ImRenderUtil::fillRectangle(rectangle, UIColor(0, 0, 0), 0.8, 9);
-        float textLen = ImRenderUtil::getTextWidth(&SearchStr, 1.15) / 2;
-        ImRenderUtil::drawText(Vector2<float>((rectangle.x + 110) - textLen, windowY + 5), &SearchStr, UIColor(255, 255, 255), 1.15 * inScale, 1, true);
-        ImRenderUtil::fillRectangle(searchRectangle, UIColor(36, 36, 36), 0.6, 6);
-        ImRenderUtil::drawText(Vector2<float>(windowX + 15, windowY + 33), &SearchQueryStr, SearchQueryColor, 1.15 * inScale, 1, true);
-
         if (catPositions.empty() && isEnabled)
         {
             float centerX = ImRenderUtil::getScreenSize().x / 2.f;
@@ -100,14 +80,6 @@ public:
                     std::transform(modLower.begin(), modLower.end(), modLower.begin(), [](unsigned char c) {
                         return std::tolower(c);
                         });
-
-                    if (modLower.find(searchQueryLower) != std::string::npos && strlen(searchQuery) != 0) {
-
-                    }
-                    else if (strlen(searchQuery) == 0) {
-
-                    }
-                    else continue;
 
                     for (const auto& setting : mod->getSettings()) {
                         switch (setting->getType())
@@ -175,14 +147,6 @@ public:
                     std::transform(modLower.begin(), modLower.end(), modLower.begin(), [](unsigned char c) {
                         return std::tolower(c);
                         });
-
-                    if (modLower.find(searchQueryLower) != std::string::npos && strlen(searchQuery) != 0) {
-
-                    }
-                    else if (strlen(searchQuery) == 0) {
-
-                    }
-                    else continue;
 
                     UIColor rgb = ColorUtils::Rainbow(2.5, 1, 1, moduleY * 2);
 
