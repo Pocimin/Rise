@@ -105,7 +105,7 @@ public:
         auto list = Global::getClientInstance()->getLocalPlayer()->getLevel()->getRuntimeActorList();
 
         for (auto* actor : list) {
-            if (actor->isAlive() && !actor->isBot()) {
+            if (actor->isAlive()) {
                 if (style == 0) {
                     draw2DESP(actor);
                 }
