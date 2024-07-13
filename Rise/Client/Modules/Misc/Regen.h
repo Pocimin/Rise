@@ -4,17 +4,14 @@ class Regen : public Module
 {
 public:
     Regen(int keybind = Keys::NUM_0, bool enabled = false) :
-        Module("Regen", "Misc", "Mines redstones in the hive for you to regenerate.", keybind, enabled)
+        Module("Regen", "Misc", "Nukes blocks in a radius around you", keybind, enabled)
     {
         addEnum("Mode", "The mode for the delay", { "Milliseconds" }, &DelayMode);
         addEnum("Side", "The side for the rotations", { "Client", "Server" }, &Side);
-        addSlider("Range", "How far around you find redstones", &range, 1, 10);
+        addSlider("Range", "How far around you is regened", &range, 1, 10);
         addSlider("Time MS", "The delay for breaking in millisecounds", &destroyMs, 1, 1000);
         addSlider("UnExposed MS", "The delay for breaking blocks that sorround the redstone in millisecounds", &blockDestroyMs, 1, 1000);
-        addBool("Exposed Only", "Only mine redstone ores that aren't covered.", &exposedOnly);
-        //addBool("Queued", "Queues redstone for you to mine later.", &Queued);
-        //addBool("Ignore Covered", "Ignore redstone if it's covered.", &IgnoreCovered);
-        //addBool("Legit Mine", "Sets your mining style to legit", &LegitMine);
+        addBool("ExposedOnly", "Dig only exposed redstone", &exposedOnly);
         addBool("Render", "Render the redstone counter", &render);
     }
 
@@ -23,10 +20,9 @@ private:
     int Side = 0;
     float range = 5;
     bool render = true;
-    bool Queued = false;
-    bool IgnoreCovered = false;
     bool exposedOnly = true;
-    bool LegitMine = true;
+
+    bool savedPrevTool = false;
 
     // Uneditable stuff
     Vector3<int> miningBlockPos;
@@ -35,18 +31,11 @@ private:
     int RedstoneSide = 0; // The redstone ore's side.
     int previousSlot = 0; // The slot before destroying.
     int animationsTime = 0;
-    float absorption = 0;
 
     float destroyMs = 800; // you can use getDestroySpeed function instead
     float blockDestroyMs = 800; // you can use getDestroySpeed function instead
-    float currentDestroyMs = 0;
 
     bool Covered = false;
-
-    bool hasPacketSent = false;
-    bool shouldSetBackSlot = false;
-    bool hasSelectedSlot = false;
-    int currentPacketSlot = 0;
 public:
     //Functions
     const static Vector2<float> CalcAngleRegen(Vector3<float> ths, Vector3<float> dst)
@@ -178,19 +167,6 @@ public:
         gamemode->stopDestroyBlock(blockPos);
     }
 
-    void stopMining() {
-        stopBreakingBlock(miningBlockPos);
-        miningBlockPos = NULL;
-        Global::miningPosition = NULL;
-        isRedstoneGettingDestroyed = false;
-        Global::shouldAttack = true;
-        TimeUtils::resetTime("extraHealthMs");
-        hasPacketSent = false;
-        hasSelectedSlot = false;
-        animationsTime = 0;
-        ChatUtils::sendMessage("Stopped mining redstone.");
-    }
-
     bool findBestTool(Block* block) {
         PlayerInventory* playerInventory = Global::getClientInstance()->getLocalPlayer()->getSupplies();
         Inventory* inventory = playerInventory->inventory;
@@ -203,19 +179,15 @@ public:
             if (stack->item != nullptr) {
                 if (isAxe) {
                     if (stack->getItem()->isAxe()) {
-                        if (previousSlot != i) {
+                        if (previousSlot != i)
                             playerInventory->hotbarSlot = i;
-                            currentPacketSlot = i;
-                        }
                         return true;
                     }
                 }
                 else {
                     if (stack->getItem()->isPickaxe()) {
-                        if (previousSlot != i) {
+                        if (previousSlot != i)
                             playerInventory->hotbarSlot = i;
-                            currentPacketSlot = i;
-                        }
                         return true;
                     }
                 }
@@ -223,6 +195,23 @@ public:
         }
 
         return false;
+    }
+
+    ItemStack* getPickaxe() {
+        PlayerInventory* playerInventory = Global::getClientInstance()->getLocalPlayer()->getSupplies();
+        Inventory* inventory = playerInventory->inventory;
+        auto previousSlot = playerInventory->hotbarSlot;
+
+        for (int i = 0; i < 36; i++) {
+            ItemStack* stack = inventory->getItem(i);
+            if (stack->item != nullptr) {
+                if (stack->getItem()->isPickaxe()) {
+                    return stack;
+                }
+            }
+        }
+
+        return nullptr;
     }
 
     float calculatePercentage(float currentMs, float destroyMs) {
@@ -264,14 +253,20 @@ public:
     void onEnabled() override {
         auto player = Global::getClientInstance()->getLocalPlayer();
         if (player == nullptr) return;
-        TimeUtils::resetTime("extraHealthMs");
-        TimeUtils::resetTime("extraHealthDelay");
+        TimeUtils::resetTime("regenMs");
+        TimeUtils::resetTime("regenDelay");
         isRedstoneGettingDestroyed = false;
-        shouldSetBackSlot = false;
     }
 
     void onEvent(ActorBaseTickEvent* event) override
     {
+        //Avoid hive anticheat checks
+        if (!TimeUtils::hasTimeElapsed("regenDelay", 50, false)) {
+            isRedstoneGettingDestroyed = false;
+            Global::shouldAttack = true;
+            return;
+        }
+
         auto player = Global::getClientInstance()->getLocalPlayer();
         if (player == nullptr) {
             return;
@@ -284,18 +279,7 @@ public:
         BlockSource* source = Global::getClientInstance()->getBlockSource();
         if (!source) return;
 
-        if (player->getAttribute(AttributeId::Health) == nullptr) {
-            return;
-        }
-
-        absorption = player->getAbsorption();
-
-        //Avoid hive anticheat checks
-        if (!TimeUtils::hasTimeElapsed("extraHealthDelay", 60, false)) {
-            isRedstoneGettingDestroyed = false;
-            Global::shouldAttack = true;
-            return;
-        }
+        float absorption = player->getAbsorption();
 
         Vector3<int> playerBlockPos = player->getAABBShape()->PosLower.ToInt();
         PlayerInventory* supplies = player->getSupplies();
@@ -303,52 +287,13 @@ public:
 
         bool isItDestroyed = false;
 
-        // Set the currentDestroyMS to destroyMs
-        static float currentDestroyMs = destroyMs;
-
-        if (shouldSetBackSlot) {
-            if (previousSlot == currentPacketSlot) {
-                shouldSetBackSlot = false;
-            }
-
-            if (supplies->hotbarSlot != currentPacketSlot) {
-                supplies->hotbarSlot = previousSlot;
-            }
-        }
-
-        //Return if extra health is full
-        if (10 <= absorption) {
-            stopBreakingBlock(miningBlockPos);
-            if (miningBlockPos != NULL) {
-                shouldSetBackSlot = true;
-                miningBlockPos = NULL;
-            }
-            Global::miningPosition = NULL;
-            isRedstoneGettingDestroyed = false;
-            Global::shouldAttack = true;
-            hasPacketSent = false;
-            hasSelectedSlot = false;
-            TimeUtils::resetTime("extraHealthMs");
-            animationsTime = 0;
-            return;
-        }
-
         if (animationsTime >= 10) {
             animationsTime = 10;
         }
 
         if (isValidBlock(miningBlockPos, exposedOnly, true)) { // If mining
-            bool isOnGround = player->isOnGround();
-            if (!isOnGround) currentDestroyMs += 39.5f;
-            Block* block = source->getBlock(miningBlockPos);
-            if (hasPacketSent) {
-                if (!hasSelectedSlot) {
-                    hasSelectedSlot = true;
-                }
-            }
-            else {
-                findBestTool(block);
-            }
+            // Set the currentDestroyMS to destroyMs
+            float currentDestroyMs = destroyMs;
 
             // Get the mining block ID
             int blockId = source->getBlock(miningBlockPos)->GetBlockLegacy()->getBlockID();
@@ -360,19 +305,31 @@ public:
                 Covered = false;
             }
 
-            if (TimeUtils::hasTimeElapsed("extraHealthMs", currentDestroyMs, true)) {
+            // If the block isn't a redstone
+            if (blockId != 73 && blockId != 74)
+                currentDestroyMs = blockDestroyMs; // Set the currentDestroyMs to blockDestroyMs
+
+            if (!savedPrevTool) {
+                previousSlot = supplies->hotbarSlot;
+                savedPrevTool = true;
+            };
+            Block* block = source->getBlock(miningBlockPos);
+            bool foundTool = findBestTool(block);
+
+            if (TimeUtils::hasTimeElapsed("regenMs", currentDestroyMs, true) && absorption < 10) {
                 isRedstoneGettingDestroyed = true;
                 Global::shouldAttack = false;
 
-                if (findBestTool(block)) {
+                if (foundTool) {
                     gamemode->destroyBlock(miningBlockPos, RedstoneSide);
                 }
                 gamemode->stopDestroyBlock(miningBlockPos);
-                shouldSetBackSlot = true;
-                TimeUtils::resetTime("extraHealthDelay");
+                supplies->hotbarSlot = previousSlot;
+                savedPrevTool = false;
+                TimeUtils::resetTime("regenDelay");
             }
             else {
-                if (isOnGround) animationsTime++;
+                animationsTime++;
                 isRedstoneGettingDestroyed = false;
                 Global::shouldAttack = true;
             }
@@ -384,13 +341,8 @@ public:
             Global::miningPosition = NULL;
             isRedstoneGettingDestroyed = false;
             Global::shouldAttack = true;
-            TimeUtils::resetTime("extraHealthMs");
-            previousSlot = supplies->hotbarSlot;
-            hasPacketSent = false;
-            hasSelectedSlot = false;
+            TimeUtils::resetTime("regenMs");
             animationsTime = 0;
-            ItemStack* stack = supplies->inventory->getItem(supplies->hotbarSlot);
-            if (stack != nullptr && stack->isBlockType()) return;
             static vector<Vector3<int>> blocks;
             vector<Vector3<int>> unExposedRedstones;
             vector<Vector3<int>> exposedRedstones;
@@ -418,31 +370,45 @@ public:
                 }
                 else continue;
             }
-            if (!exposedRedstones.empty()) {
-                for (const Vector3<int>& blockPos : exposedRedstones) {
-                    miningBlockPos = blockPos;
-                    Global::miningPosition = blockPos;
 
-                    RedstoneSide = getBlockBreakFace(miningBlockPos.ToFloat());
-
-                    gamemode->startDestroyBlock(miningBlockPos, RedstoneSide, isItDestroyed);
-                    currentDestroyMs = destroyMs; // Set the currentDestroyMs to destroyMs
-                    return;
-                }
-            }
-            else if (!exposedOnly && !unExposedRedstones.empty()) {
-                for (int i = 1; i < 3; i++) {
-                    for (const Vector3<int>& blockPos : unExposedRedstones) {
-                        auto foundBlock = findPathToBlock(blockPos, i);
-                        if (foundBlock == NULL) continue;
-                        miningBlockPos = foundBlock;
+            if (exposedOnly) {
+                if (!exposedRedstones.empty()) {
+                    for (const Vector3<int>& blockPos : exposedRedstones) {
+                        miningBlockPos = blockPos;
                         Global::miningPosition = blockPos;
 
                         RedstoneSide = getBlockBreakFace(miningBlockPos.ToFloat());
 
                         gamemode->startDestroyBlock(miningBlockPos, RedstoneSide, isItDestroyed);
-                        currentDestroyMs = blockDestroyMs; // Set the currentDestroyMs to blockDestroyMs
                         return;
+                    }
+                }
+            }
+            else {
+                if (!exposedRedstones.empty()) {
+                    for (const Vector3<int>& blockPos : exposedRedstones) {
+                        miningBlockPos = blockPos;
+                        Global::miningPosition = blockPos;
+
+                        RedstoneSide = getBlockBreakFace(miningBlockPos.ToFloat());
+
+                        gamemode->startDestroyBlock(miningBlockPos, RedstoneSide, isItDestroyed);
+                        return;
+                    }
+                }
+                else if (!unExposedRedstones.empty()) {
+                    for (int i = 1; i < 3; i++) {
+                        for (const Vector3<int>& blockPos : unExposedRedstones) {
+                            auto foundBlock = findPathToBlock(blockPos, i);
+                            if (foundBlock == NULL) continue;
+                            miningBlockPos = foundBlock;
+                            Global::miningPosition = blockPos;
+
+                            RedstoneSide = getBlockBreakFace(miningBlockPos.ToFloat());
+
+                            gamemode->startDestroyBlock(miningBlockPos, RedstoneSide, isItDestroyed);
+                            return;
+                        }
                     }
                 }
             }
@@ -467,39 +433,11 @@ public:
         player->getLevel()->getHitResult()->IBlockPos = miningBlockPos;
         player->getLevel()->getHitResult()->HitType = 0;
         player->getLevel()->getHitResult()->AbsoluteHitPos = miningBlockPos.ToFloat();
-    } 
-
+    }
 
     void onEvent(PacketEvent* event) override {
         auto player = Global::getClientInstance()->getLocalPlayer();
-        if (player == nullptr) return;
-
-        //Spoof
-        if (event->Packet->getId() == PacketID::MobEquipment) {
-            auto* pkt = reinterpret_cast<MobEquipmentPacket*>(event->Packet);
-            if (pkt->mSlot == previousSlot) {
-                if (shouldSetBackSlot || miningBlockPos == NULL) {
-                    shouldSetBackSlot = false;
-                }
-                else {
-                    ItemStack* stack = player->getSupplies()->inventory->getItem(pkt->mSlot);
-                    if (stack == nullptr || !stack->isBlockType()) {
-                        *event->cancelled = true;
-                    }
-                    else if (miningBlockPos != NULL) {
-                        stopMining();
-                    }
-                }
-            }
-            else if (pkt->mSlot == currentPacketSlot) {
-                hasPacketSent = true;
-            }
-            else if (miningBlockPos != NULL) {
-                stopMining();
-            }
-        }
-
-        if (!isRedstoneGettingDestroyed || miningBlockPos == NULL) {
+        if (player == nullptr || !isRedstoneGettingDestroyed || miningBlockPos == NULL) {
             return;
         }
 
@@ -522,9 +460,11 @@ public:
             return;
         }
 
+        float absorption = player->getAbsorption();
+
         static EasingUtil inEase;
 
-        (instance->getMinecraftGame()->CanUseKeys && miningBlockPos != NULL && render && !TimeUtils::hasTimeElapsed("extraHealthMs", destroyMs - 200, false)) ?
+        (instance->getMinecraftGame()->CanUseKeys && miningBlockPos != NULL && render && !TimeUtils::hasTimeElapsed("regenMs", destroyMs - 200, false)) ?
             inEase.incrementPercentage(ImRenderUtil::getDeltaTime() * 10.f / 10) // Increase the animation
             : inEase.decrementPercentage(ImRenderUtil::getDeltaTime() * 2 * 10.f / 10); // Decrease the animation
 
@@ -553,7 +493,7 @@ public:
                 RenderColor = UIColor(193, 54, 52); // Set the color to red (covered)
                 RenderText = "Covered";
 
-                if (TimeUtils::hasTimeElapsed("extraHealthMs", destroyMs - 90, false)) {
+                if (TimeUtils::hasTimeElapsed("regenMs", destroyMs - 90, false)) {
                     inEase.decrementPercentage(ImRenderUtil::getDeltaTime() * 2 * 10.f / 10);
                     //ChatUtils::sendMessage("Uncovering ore");
                 }
@@ -568,7 +508,7 @@ public:
                     RenderText = "Mining";
                 }
 
-                if (TimeUtils::hasTimeElapsed("extraHealthMs", destroyMs - 90, false)) {
+                if (TimeUtils::hasTimeElapsed("regenMs", destroyMs - 90, false)) {
                     inEase.decrementPercentage(ImRenderUtil::getDeltaTime() * 2 * 10.f / 10);
                     //ChatUtils::sendMessage("Uncovering ore");
                 }
@@ -580,7 +520,7 @@ public:
                 RenderColor = UIColor(193, 54, 52); // Set the color to red (covered)
                 RenderText = "Covered";
 
-                if (TimeUtils::hasTimeElapsed("extraHealthMs", destroyMs - 90, false)) {
+                if (TimeUtils::hasTimeElapsed("regenMs", destroyMs - 90, false)) {
                     inEase.decrementPercentage(ImRenderUtil::getDeltaTime() * 2 * 10.f / 10);
                     //ChatUtils::sendMessage("Uncovering ore");
                 }
@@ -595,7 +535,7 @@ public:
                     RenderText = "Mining";
                 }
 
-                if (TimeUtils::hasTimeElapsed("extraHealthMs", destroyMs - 90, false)) {
+                if (TimeUtils::hasTimeElapsed("regenMs", destroyMs - 90, false)) {
                     inEase.decrementPercentage(ImRenderUtil::getDeltaTime() * 2 * 10.f / 10);
                     //ChatUtils::sendMessage("Uncovering ore");
                 }
@@ -630,14 +570,7 @@ public:
     }
 
     void onDisabled() override {
-        auto player = Global::getClientInstance()->getLocalPlayer();
-        if (player == nullptr) {
-            return;
-        }
         stopBreakingBlock(miningBlockPos);
-        if (miningBlockPos != NULL) {
-            player->getSupplies()->hotbarSlot = currentPacketSlot;
-        }
         Global::shouldAttack = true;
     }
 

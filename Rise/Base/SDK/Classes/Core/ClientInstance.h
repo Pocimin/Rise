@@ -8,11 +8,12 @@
 #include "LevelRender.h"
 #include "../Network/RakNetConnector.h"
 
-// Define 
-#define LocalPlayerIndex 29 // 1.20.80
-#define DisableInputIndex 329 // 1.20.80
-#define ReleaseMouseIndex 330 // 1.20.80
-#define GrabMouseIndex 331 // 1.20.80
+
+//niggas 1.21.2 updated thx tozicc
+#define LocalPlayerIndex 29 // 1.21.2
+#define DisableInputIndex 331 // 1.21.2
+#define ReleaseMouseIndex 332 // 1.21.2
+#define GrabMouseIndex 333 // 1.21.2
 
 class ClientInstance {
 public:

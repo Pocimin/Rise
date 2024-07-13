@@ -123,7 +123,7 @@ namespace FileUtils {
         downloadFile("https://raw.githubusercontent.com/xNotTozic/Shadow-Assets/main/eye.png", getResourcePath() + "\\Visual.png");
         downloadFile("https://raw.githubusercontent.com/xNotTozic/Shadow-Assets/main/flask.png", getResourcePath() + "\\Misc.png");
         downloadFile("https://raw.githubusercontent.com/xNotTozic/Shadow-Assets/main/Title.png", getResourcePath() + "\\Title.png");
-        downloadFile("https://raw.githubusercontent.com/xNotTozic/Shadow-Assets/main/TargetHead.png", getResourcePath() + "\\TargetHead.png");
+        downloadFile("https://raw.githubusercontent.com/Pocimin/Rise-Assets/main/TargetHead.png", getResourcePath() + "\\TargetHead.png");
     }
 
     void debugOutput(std::string output) {
