@@ -8,6 +8,10 @@
 #include "MojangLes.h" // MojangLes's font.
 #include "ProductSansBold.h" // ProductSans's font.
 #include "ProductSans.h" // ProductSans's font.
+#include "tenacity.h" // Tenacity's font.
+#include "tenacitybold.h" // Tenacity Bold's font.
+#include "Rubik.hpp" // Rubik's font.
+#include "neverlose.h" // neverlose's font.
 
 void* oPresent;
 void* oResize;
@@ -120,6 +124,14 @@ void loadFonts() { // load ImGui font.
 	ImGui::GetIO().Fonts->AddFontFromMemoryTTF(Mojangles, sizeof(Mojangles), 48.f); // 4
 	ImGui::GetIO().Fonts->AddFontFromMemoryTTF(ComicTTF, sizeof(ComicTTF), 48.f); // 5
 	ImGui::GetIO().Fonts->AddFontFromMemoryTTF(IconTTF, sizeof(IconTTF), 48.f); // 6
+	ImGui::GetIO().Fonts->AddFontFromMemoryTTF(neverlose_ttf, sizeof(neverlose_ttf_len), 48.f); // 7
+	ImGui::GetIO().Fonts->AddFontFromMemoryTTF(Rubik_Regular_ttf, sizeof(Rubik_Regular_ttf_len), 48.f); // 8
+	ImGui::GetIO().Fonts->AddFontFromMemoryTTF(tenacity_ttf, sizeof(tenacity_ttf_len), 48.f); // 9
+	ImGui::GetIO().Fonts->AddFontFromMemoryTTF(tenacity_bold_ttf, sizeof(tenacity_bold_ttf_len), 48.f); // 10
+
+
+
+
 
 	ImGui::GetStyle().WindowRounding = 13.f; // Set the default Windows Rounding to 8
 	std::string HeadImageFilePath = FileUtils::getResourcePath() + "\\TargetHead.png";
