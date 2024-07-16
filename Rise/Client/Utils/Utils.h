@@ -1,5 +1,13 @@
 #pragma once
 
+#define tozic1 retard
+#define tozic2 9 year old
+#define tozic3 paster
+#define tozic4 skid
+#define tozic5 80kg
+#define tozic6 4'10
+#define tozic7 6'4 sideways
+
 #pragma region DirectClassAccess
 
 template <typename Ret, typename Type>
@@ -256,24 +264,155 @@ namespace Utils {
         PlaySoundA((LPCSTR)path.c_str(), NULL, SND_FILENAME | SND_ASYNC);
     }
 
-    static std::string sanitize(std::string text) {
-        std::string out;
-        bool wasValid = true;
-        for (char c : text) {
-            bool isValid = !invalidChar(c);
-            if (wasValid) {
-                if (!isValid) {
-                    wasValid = false;
+    // UTF-8
+    static size_t getUTF8CharLength(unsigned char uc) {
+        if (uc <= 0x7F) return 1;
+        if (uc >= 0xC2 && uc <= 0xDF) return 2;
+        if (uc >= 0xE0 && uc <= 0xEF) return 3;
+        if (uc >= 0xF0 && uc <= 0xF4) return 4;
+        return 0;  // Handle invalid UTF-8 characters if needed
+    }
+
+    static bool isValidContinuationByte(unsigned char uc) {
+        return (uc & 0xC0) == 0x80;
+    }
+
+    // UTF-16
+    static bool isHighSurrogate(uint16_t uc) {
+        return (uc >= 0xD800 && uc <= 0xDBFF);
+    }
+
+    static bool isLowSurrogate(uint16_t uc) {
+        return (uc >= 0xDC00 && uc <= 0xDFFF);
+    }
+
+    static bool isValidUTF16Start(uint16_t uc) {
+        return (uc < 0xD800 || uc > 0xDFFF);
+    }
+
+    // UTF-32 
+    static bool isValidUTF32Char(uint32_t uc) {
+        return (uc <= 0x10FFFF);
+    }
+
+    static std::string sanitize(const std::string& text) {
+        std::string sanitizedText;
+        sanitizedText.reserve(text.size());
+        size_t index = 0;
+        size_t textLength = text.size();
+
+        while (index < textLength) {
+            unsigned char currentChar = static_cast<unsigned char>(text[index]);
+
+            // skip § cuz we homeless sorry
+            if (currentChar == 0xC2 && index + 1 < textLength && static_cast<unsigned char>(text[index + 1]) == 0xA7) {
+                index += 2; // Move past '§'
+                if (index < textLength) {
+                    ++index; // skip 1 more lol
                 }
-                else {
-                    out += c;
+                continue;
+            }
+
+            size_t charLength = getUTF8CharLength(currentChar);
+
+            if (charLength == 0 || index + charLength > textLength) {
+                std::cerr << "Invalid start byte at index " << index << ": " << static_cast<int>(currentChar) << std::endl;
+                ++index;
+                continue;
+            }
+
+            bool isValidSequence = true;
+            for (size_t offset = 1; offset < charLength; ++offset) {
+                if (!isValidContinuationByte(static_cast<unsigned char>(text[index + offset]))) {
+                    std::cerr << "Invalid continuation byte at index " << (index + offset) << ": " << static_cast<int>(text[index + offset]) << std::endl;
+                    isValidSequence = false;
+                    break;
                 }
+            }
+
+            if (isValidSequence) {
+                sanitizedText.append(text, index, charLength);
+                index += charLength;
             }
             else {
-                wasValid = isValid;
+                ++index;
             }
         }
-        return out;
+
+        return sanitizedText;
+    }
+
+    //utf16
+    static std::u16string sanitize(const std::u16string& text) {
+        std::u16string sanitizedText;
+        sanitizedText.reserve(text.size());
+        size_t index = 0;
+        size_t textLength = text.size();
+
+        while (index < textLength) {
+            uint16_t currentChar = text[index];
+
+            // skip § cuz we homeless sorry
+            if (currentChar == 0x00A7 && index + 1 < textLength) {
+                index += 2; // Move past '§'
+                if (index < textLength) {
+                    ++index; // skip 1 more lol
+                }
+                continue;
+            }
+
+            if (isHighSurrogate(currentChar)) {
+                if (index + 1 < textLength && isLowSurrogate(text[index + 1])) {
+                    sanitizedText.append(text, index, 2);
+                    index += 2;
+                }
+                else {
+                    std::cerr << "Invalid high surrogate at index " << index << ": " << currentChar << std::endl;
+                    ++index;
+                }
+            }
+            else if (isValidUTF16Start(currentChar)) {
+                sanitizedText.append(text, index, 1);
+                ++index;
+            }
+            else {
+                std::cerr << "Invalid UTF-16 character at index " << index << ": " << currentChar << std::endl;
+                ++index;
+            }
+        }
+
+        return sanitizedText;
+    }
+
+    //utf32
+    static std::u32string sanitize(const std::u32string& text) {
+        std::u32string sanitizedText;
+        sanitizedText.reserve(text.size());
+        size_t index = 0;
+        size_t textLength = text.size();
+
+        while (index < textLength) {
+            uint32_t currentChar = text[index];
+
+            // skip § cuz we homeless sorry
+            if (currentChar == 0x000000A7 && index + 1 < textLength) {
+                index += 2;
+                if (index < textLength) {
+                    ++index; // skip 1 more lol
+                }
+                continue;
+            }
+
+            if (isValidUTF32Char(currentChar)) {
+                sanitizedText.append(text, index, 1);
+            }
+            else {
+                std::cerr << "Invalid UTF-32 character at index " << index << ": " << currentChar << std::endl;
+            }
+            ++index;
+        }
+
+        return sanitizedText;
     }
 
     static inline void toastNotification(std::string title, std::string message) {
