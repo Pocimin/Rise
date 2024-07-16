@@ -173,9 +173,10 @@ void InitializeMods() {
 // Uninitialize modules.
 void UninitializeMods() {
 	for (auto mod : modules) {
-		if (mod->isEnabled()) // If a module is enabled.
-			mod->toggle(); // Disable the module.
-
+		if (mod->isEnabled()) {
+			mod->toggle();
+		}
 		delete mod;
 	}
+	modules.clear(); //no more memory leak
 }

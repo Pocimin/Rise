@@ -33,6 +33,12 @@ public:
 
 #pragma endregion
 
+
+
+
+// HOOOLY MEMORY LEAK
+
+
 // This function initializes all registered function hooks
 void InitializeHooks() {
 	// This is an array of pointers to function hook objects
@@ -40,7 +46,7 @@ void InitializeHooks() {
 		// Now in the FuncHook class here register the hooks.
 		&RenderContextHook::Instance(),
 		&DirectXHook::Instance(), // This is used to initialize dx11 & dx12 hooks
-		&KeymapHook::Instance(),
+		&KeymapHook::Instance(), 
 		&MouseHook::Instance(),
 		&ActorBaseTickHook::Instance(),
 		&ContainerTickHook::Instance(),
