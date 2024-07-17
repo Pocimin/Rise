@@ -113,7 +113,7 @@ public:
             top_config.push_back(mod_config);
         }
 
-        std::ofstream file(FileUtils::getClientPath() + "\\configurations\\" + config + ".json");
+        std::ofstream file(FileUtils::getClientPath() + "\\Configs\\" + config + ".json");
         if (file.is_open())
         {
             file << std::setw(4) << top_config;
@@ -123,7 +123,7 @@ public:
 
     void LoadConfig(std::string config)
     {
-        std::ifstream file(FileUtils::getClientPath() + "\\configurations\\" + config + ".json");
+        std::ifstream file(FileUtils::getClientPath() + "\\Configs\\" + config + ".json");
 
         if (file.good()) // Check if the file exists and can be opened
         {

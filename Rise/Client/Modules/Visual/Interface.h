@@ -15,7 +15,7 @@ public:
         visible = false;
     }
 
-    int font = 0;
+    int font = 2;
 
     bool keystrokes = false;
     float keystrokessize = 2.5;

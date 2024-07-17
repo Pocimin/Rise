@@ -25,15 +25,15 @@ public:
 
             int ind = 0;
 
-            ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[3]);
+            ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
             std::string name = xorstr_("Rise");
-            std::string version = xorstr_("Rebuild");
+            std::string version = xorstr_("");
 
             ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
-            ImRenderUtil::drawText(Vector2<float>(pos2.x + 10, pos2.y + 46), &version, UIColor(44, 44, 44), 1.1, 1, true);
+            ImRenderUtil::drawText(Vector2<float>(pos2.x + 10, pos2.y + 46), &version, UIColor(255, 255, 255), 1.1, 1, true);
             ImGui::PopFont();
 
-            UIColor customColor = UIColor(129, 221, 224);  // Define the custom color
+            UIColor customColor = UIColor(255, 255, 255);  // Define the custom color
 
             for (char c : (std::string)name)
             {
@@ -42,7 +42,7 @@ public:
                 float charWidth = ImRenderUtil::getTextWidth(&string, 2.3);
                 float charHeight = ImRenderUtil::getTextHeight(2.3);
 
-                ImRenderUtil::drawShadowSquare(Vector2<float>(pos2.x + charWidth / 2, pos2.y + charHeight / 1.2), 15.f, customColor, 0.85f, 70.f, 0);
+                
                 ImRenderUtil::drawText(Vector2<float>(pos2.x + 10, pos2.y + 10), &string, customColor, 2.3, 1, true);
 
                 pos2.x += charWidth;

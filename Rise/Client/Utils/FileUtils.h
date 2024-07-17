@@ -58,7 +58,7 @@ namespace FileUtils {
     // Get the resource folder inside the client's folder.
     std::string getResourcePath(void) {
         // The Resource's file location.
-        std::string ResourcePath = getClientPath() + xorstr_("\\Resource");
+        std::string ResourcePath = getClientPath() + xorstr_("\\Assets");
 
         // Convert ResourcePath to a filesystem::path.
         auto ResourceFolder = std::filesystem::path(ResourcePath);
@@ -113,8 +113,8 @@ namespace FileUtils {
             writeText(getClientPath() + xorstr_("\\Authentication.txt"), xorstr_("Username: \nPassword: \nKey: "));
         }
         
-        if (!doesPathExist(getClientPath() + xorstr_("\\configurations\\"))) {
-            createPath(getClientPath() + xorstr_("\\configurations\\"));
+        if (!doesPathExist(getClientPath() + xorstr_("\\Configs\\"))) {
+            createPath(getClientPath() + xorstr_("\\Configs\\"));
         }
 
         downloadFile("https://raw.githubusercontent.com/xNotTozic/Shadow-Assets/main/fire.png", getResourcePath() + "\\Combat.png");
@@ -130,7 +130,7 @@ namespace FileUtils {
         static bool init = false;
         static auto path = getClientPath();
 
-        auto file = std::string(path + xorstr_("\\Output.txt"));
+        auto file = std::string(path + xorstr_("\\Logs.txt"));
 
         if (!init) {
             auto f = std::filesystem::path(file);
