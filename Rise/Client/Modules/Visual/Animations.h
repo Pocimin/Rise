@@ -30,12 +30,12 @@ public:
         glm::mat4& matrix = *event->Matrix;
 
         if (swingType == 0) {
-            Utils::nopBytes(fluxSwingAddr, 5);
-            Utils::patchBytes((BYTE*)((uintptr_t)tapAddr), (BYTE*)"\xF3\x0F\x51\xF0", 4);
+            //Utils::nopBytes(fluxSwingAddr, 5);
+            //Utils::patchBytes((BYTE*)((uintptr_t)tapAddr), (BYTE*)"\xF3\x0F\x51\xF0", 4);
         }
         if (swingType == 1) {
-            Utils::nopBytes((BYTE*)tapAddr, 4);
-            Utils::patchBytes((BYTE*)((uintptr_t)fluxSwingAddr), (BYTE*)"\xF3\x0F\x51\xF0", 6);
+            //Utils::nopBytes((BYTE*)tapAddr, 4);
+            //zUtils::patchBytes((BYTE*)((uintptr_t)fluxSwingAddr), (BYTE*)"\xF3\x0F\x51\xF0", 6);
         }
 
         if ((GetAsyncKeyState(VK_RBUTTON) || Global::ShouldBlock) && Global::getClientInstance()->getMinecraftGame()->getCanUseKeys()) // RenderUtil::GetCTX()->ClientInstance->mcGame->CanUseKeys
