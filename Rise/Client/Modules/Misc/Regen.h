@@ -4,11 +4,11 @@ class Regen : public Module
 {
 public:
     Regen(int keybind = Keys::NUM_0, bool enabled = false) :
-        Module("Regen", "Misc", "Nukes blocks in a radius around you", keybind, enabled)
+        Module("Regen", "Misc", "Mines redstones in the hive for you to regenerate.", keybind, enabled)
     {
         addEnum("Mode", "The mode for the delay", { "Milliseconds" }, &DelayMode);
         addEnum("Side", "The side for the rotations", { "Client", "Server" }, &Side);
-        addSlider("Range", "How far around you is regened", &range, 1, 10);
+        addSlider("Range", "How far is the range to break redstones", &range, 1, 10);
         addSlider("Time MS", "The delay for breaking in millisecounds", &destroyMs, 1, 1000);
         addSlider("UnExposed MS", "The delay for breaking blocks that sorround the redstone in millisecounds", &blockDestroyMs, 1, 1000);
         addBool("ExposedOnly", "Dig only exposed redstone", &exposedOnly);
@@ -167,6 +167,17 @@ public:
         gamemode->stopDestroyBlock(blockPos);
     }
 
+    void stopMining() {
+        stopBreakingBlock(miningBlockPos);
+        miningBlockPos = NULL;
+        Global::miningPosition = NULL;
+        isRedstoneGettingDestroyed = false;
+        Global::shouldAttack = true;
+        TimeUtils::resetTime("extraHealthMs");
+        animationsTime = 0;
+        ChatUtils::sendMessage("Stopped mining redstone.");
+    }
+
     bool findBestTool(Block* block) {
         PlayerInventory* playerInventory = Global::getClientInstance()->getLocalPlayer()->getSupplies();
         Inventory* inventory = playerInventory->inventory;
@@ -289,6 +300,20 @@ public:
 
         if (animationsTime >= 10) {
             animationsTime = 10;
+        }
+
+        if (10 <= absorption) {
+            stopBreakingBlock(miningBlockPos);
+            if (miningBlockPos != NULL) {
+                previousSlot = true;
+                miningBlockPos = NULL;
+            }
+            Global::miningPosition = NULL;
+            isRedstoneGettingDestroyed = false;
+            Global::shouldAttack = true;
+            TimeUtils::resetTime("extraHealthMs");
+            animationsTime = 0;
+            return;
         }
 
         if (isValidBlock(miningBlockPos, exposedOnly, true)) { // If mining

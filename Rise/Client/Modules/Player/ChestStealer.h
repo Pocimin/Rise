@@ -21,13 +21,13 @@ public:
         if (!controller)
             return;
 
-        bool itemsRemaining = false;
+        bool itemsRemaining = true;
 
         if (TimeUtils::hasTimeElapsed("Cs", 1000 / SPS, true)) {
             for (int i = 0; i < 56; ++i) {
                 if (controller->_getItemStack(Containers::Container, i)->item != nullptr) {
                     controller->shiftItems(Containers::Container, i);
-                    itemsRemaining = true;
+                    itemsRemaining = false;
                     break;
                 }
             }
