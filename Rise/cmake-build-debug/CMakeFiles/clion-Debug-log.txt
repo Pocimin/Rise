@@ -1,0 +1,8 @@
+"C:\Program Files\JetBrains\CLion 2024.1.4\bin\cmake\win\x64\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_MAKE_PROGRAM=C:/Program Files/JetBrains/CLion 2024.1.4/bin/ninja/win/x64/ninja.exe" -G Ninja -S C:\Users\Solar\Desktop\Source\Clients\Prax-master -B C:\Users\Solar\Desktop\Source\Clients\Prax-master\cmake-build-debug
+-- Could NOT find OpenSSL, try to set the path to OpenSSL root folder in the system variable OPENSSL_ROOT_DIR (missing: OPENSSL_CRYPTO_LIBRARY OPENSSL_INCLUDE_DIR) 
+CMake Error at CMakeLists.txt:195 (set_property):
+  set_property could not find TARGET cryptopp.  Perhaps it has not yet been
+  created.
+
+
+-- Configuring incomplete, errors occurred!
