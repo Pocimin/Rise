@@ -7,20 +7,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Rise", "Rise\Rise.vcxproj",
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
-		Release|x64 = Release|x64
-		Release|x86 = Release|x86
+		booger|ARM = booger|ARM
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{1226E9DA-2B2A-49BC-9976-30644EF68DFD}.Debug|x64.ActiveCfg = Debug|x64
-		{1226E9DA-2B2A-49BC-9976-30644EF68DFD}.Debug|x64.Build.0 = Debug|x64
-		{1226E9DA-2B2A-49BC-9976-30644EF68DFD}.Debug|x86.ActiveCfg = Debug|Win32
-		{1226E9DA-2B2A-49BC-9976-30644EF68DFD}.Debug|x86.Build.0 = Debug|Win32
-		{1226E9DA-2B2A-49BC-9976-30644EF68DFD}.Release|x64.ActiveCfg = Release|x64
-		{1226E9DA-2B2A-49BC-9976-30644EF68DFD}.Release|x64.Build.0 = Release|x64
-		{1226E9DA-2B2A-49BC-9976-30644EF68DFD}.Release|x86.ActiveCfg = Release|Win32
-		{1226E9DA-2B2A-49BC-9976-30644EF68DFD}.Release|x86.Build.0 = Release|Win32
+		{1226E9DA-2B2A-49BC-9976-30644EF68DFD}.booger|ARM.ActiveCfg = booger|ARM
+		{1226E9DA-2B2A-49BC-9976-30644EF68DFD}.booger|ARM.Build.0 = booger|ARM
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
