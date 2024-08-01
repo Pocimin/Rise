@@ -1,5 +1,7 @@
 bool isRunning = true;
 
+// DO YOUR BASE KIDDO RISE RECODE!
+
 #include <Windows.h>
 
 void InitializeClient() {
