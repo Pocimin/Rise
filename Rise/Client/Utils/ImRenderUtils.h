@@ -331,7 +331,7 @@ public:
 			int colorIndex = ind * 7;
 			Vector2 Pos1 = TestWorldToScreen(center);
 			if (!Global::getClientInstance()->WorldToScreen(center, Pos1)) continue;
-			drawLine3D(points[i], points[i + 1], ColorUtils::Rainbow(speed, 1.F, 1.F, colorIndex));
+			drawLine3D(points[i], points[i + 1], UIColor(255,255,255));
 			++ind;
 		}
 		drawLine3D(points.back(), points.front(), ColorUtils::Rainbow(speed, 1.F, 1.F, ind * 7));

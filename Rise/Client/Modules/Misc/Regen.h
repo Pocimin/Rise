@@ -271,13 +271,6 @@ public:
 
     void onEvent(ActorBaseTickEvent* event) override
     {
-        //Avoid hive anticheat checks
-        if (!TimeUtils::hasTimeElapsed("regenDelay", 50, false)) {
-            isRedstoneGettingDestroyed = false;
-            Global::shouldAttack = true;
-            return;
-        }
-
         auto player = Global::getClientInstance()->getLocalPlayer();
         if (player == nullptr) {
             return;
@@ -291,6 +284,26 @@ public:
         if (!source) return;
 
         float absorption = player->getAbsorption();
+
+        // Check if the player is on the ground
+        bool isOnGround = player->isOnGround();
+
+        // Check if the player is in the air, and if so, stop breaking the block and queue it
+        if (!isOnGround) {
+            stopBreakingBlock(miningBlockPos);
+            if (miningBlockPos != NULL) {
+                // Queue the block to be mined later
+                Global::shouldAttack = true;
+                return;
+            }
+        }
+
+        // Continue with the existing regen logic
+        if (!TimeUtils::hasTimeElapsed("regenDelay", 50, false)) {
+            isRedstoneGettingDestroyed = false;
+            Global::shouldAttack = true;
+            return;
+        }
 
         Vector3<int> playerBlockPos = player->getAABBShape()->PosLower.ToInt();
         PlayerInventory* supplies = player->getSupplies();
@@ -317,10 +330,8 @@ public:
         }
 
         if (isValidBlock(miningBlockPos, exposedOnly, true)) { // If mining
-            // Set the currentDestroyMS to destroyMs
             float currentDestroyMs = destroyMs;
 
-            // Get the mining block ID
             int blockId = source->getBlock(miningBlockPos)->GetBlockLegacy()->getBlockID();
 
             if (blockId != 73 && blockId != 74) {
@@ -330,9 +341,8 @@ public:
                 Covered = false;
             }
 
-            // If the block isn't a redstone
             if (blockId != 73 && blockId != 74)
-                currentDestroyMs = blockDestroyMs; // Set the currentDestroyMs to blockDestroyMs
+                currentDestroyMs = blockDestroyMs;
 
             if (!savedPrevTool) {
                 previousSlot = supplies->hotbarSlot;
@@ -359,8 +369,7 @@ public:
                 Global::shouldAttack = true;
             }
         }
-        else //find new block
-        {
+        else { // Find new block
             stopBreakingBlock(miningBlockPos);
             miningBlockPos = NULL;
             Global::miningPosition = NULL;
@@ -388,8 +397,7 @@ public:
             for (const Vector3<int>& offset : blocks) {
                 Vector3<int> blockPos = Vector3<int>(playerBlockPos.x + offset.x, playerBlockPos.y + offset.y, playerBlockPos.z + offset.z);
 
-                if (isValidBlock(blockPos, true, false))
-                {
+                if (isValidBlock(blockPos, true, false)) {
                     if (isRedstoneOreExposed(blockPos)) exposedRedstones.push_back(blockPos);
                     else unExposedRedstones.push_back(blockPos);
                 }
@@ -439,6 +447,7 @@ public:
             }
         }
     }
+
 
     void onEvent(IntersectsTickEvent* event) override {
 
